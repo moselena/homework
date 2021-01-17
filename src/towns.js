@@ -37,6 +37,32 @@ const homeworkContainer = document.querySelector('#homework-container');
  https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json
  */
 function loadTowns() {
+  return new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json', true);
+    xhr.send();
+    xhr.onreadystatechange = function() {
+      if (this.readyState != 4) return;
+
+      if (xhr.status != 200) {
+        reject('Не удалось загрузить города');
+      } else {
+        let arr = JSON.parse(xhr.responseText);
+
+        arr.sort(function(a, b) {
+          if (a.name > b.name) {
+            return 1;
+          } else if (a.name < b.name) {
+            return -1;
+          } else {
+            return 0; 
+          }
+        });
+
+        resolve(arr);
+      }
+    }
+  });
 }
 
 /*
@@ -51,6 +77,9 @@ function loadTowns() {
    isMatching('Moscow', 'Moscov') // false
  */
 function isMatching(full, chunk) {
+  let ful = full[0].toLowerCase() + full.slice(1);
+  let chun = chunk.toLowerCase();
+  return ful.includes(chun);
 }
 
 /* Блок с надписью "Загрузка" */
@@ -62,8 +91,33 @@ const filterInput = homeworkContainer.querySelector('#filter-input');
 /* Блок с результатами поиска */
 const filterResult = homeworkContainer.querySelector('#filter-result');
 
-filterInput.addEventListener('keyup', function() {
-    // это обработчик нажатия кливиш в текстовом поле
+let towns;
+
+loadTowns().then((arr) => {
+  towns = arr;
+  loadingBlock.style.display = 'none';
+  filterBlock.style.display = 'block';
+});
+
+filterInput.addEventListener('keyup', ({ target }) => {
+    const { value } = target;
+    const result = [];
+
+    if (value !== '') {
+      towns.forEach(town => isMatching(town.name, value) ? result.push(town.name) : false);
+      filterResult.innerHTML = '';
+    } else {
+      filterResult.innerHTML = '';
+    }
+
+    if (result.length) {
+      result.forEach(town => {
+        const el = document.createElement('div');
+        el.textContent = town;
+        
+        filterResult.append(el);
+      });
+    }
 });
 
 export {
