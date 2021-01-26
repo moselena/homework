@@ -24,7 +24,7 @@ describe('ДЗ 7.2 - Cookie editor', () => {
     homeworkContainer.id = 'homework-container';
     homeworkContainer.innerHTML = template();
     document.body.appendChild(homeworkContainer);
-    require('../src/cookie');
+    require('../src');
 
     describe('Интеграционное тестирование', () => {
         beforeEach(() => {
