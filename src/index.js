@@ -1,109 +1,89 @@
-/* ДЗ 1 - Функции */
+import './style.css';
 
-/*
- Задание 1:
+ymaps.ready(init);
 
- 1.1: Добавьте к функции параметр с любым именем
- 1.2: Функция должна возвращать аргумент, переданный ей в качестве параметра
+function init() {
+    var myPlacemark,
+        myMap = new ymaps.Map('map', {
+        center: [55.76, 37.64],
+        zoom: 12,
+        controls: ['zoomControl']
+    });
 
- Пример:
-   returnFirstArgument(10) вернет 10
-   returnFirstArgument('привет') вернет `привет`
+    myMap.events.add('click', function (e) {
+        var coords = e.get('coords');
 
- Другими словами: функция должна возвращать в неизменном виде то, что поступает ей на вход
- */
-function returnFirstArgument(x) {
-  return x;
-}
+        // Если метка уже создана – просто передвигаем ее.
+        if (myPlacemark) {
+            myPlacemark.geometry.setCoordinates(coords);
+        }
+        // Если нет – создаем.
+        else {
+            myPlacemark = createPlacemark(coords);
+            myMap.geoObjects.add(myPlacemark);
+            // Слушаем событие окончания перетаскивания на метке.
+            myPlacemark.events.add('dragend', function () {
+                getAddress(myPlacemark.geometry.getCoordinates());
+            });
+        }
+        getAddress(coords);
+    });
 
-/*
- Задание 2:
+    // Создание метки.
+    function createPlacemark(coords) {
+        return new ymaps.Placemark(coords, {
+            // iconCaption: 'поиск...'
+        }, {
+            preset: 'islands#violetDotIconWithCaption',
+            draggable: true
+        });
+    }
 
- 2.1: Функция должна возвращать сумму переданных аргументов
+    // Определяем адрес по координатам (обратное геокодирование).
+    function getAddress(coords) {
+        // myPlacemark.properties.set('iconCaption', 'поиск...');
+        ymaps.geocode(coords).then(function (res) {
+            var firstGeoObject = res.geoObjects.get(0);
 
- Пример:
-   sumWithDefaults(10, 20) вернет 30
-   sumWithDefaults(2, 4) вернет 6
+            myPlacemark.properties
+                .set({
+                    // // Формируем строку с данными об объекте.
+                    // iconCaption: [
+                    //     // Название населенного пункта или вышестоящее административно-территориальное образование.
+                    //     firstGeoObject.getLocalities().length ? firstGeoObject.getLocalities() : firstGeoObject.getAdministrativeAreas(),
+                    //     // Получаем путь до топонима, если метод вернул null, запрашиваем наименование здания.
+                    //     firstGeoObject.getThoroughfare() || firstGeoObject.getPremise()
+                    // ].filter(Boolean).join(', '),
+                    balloonContent: [`<div class="modal_window">
+                                        <div class="modal_window_header">
+                                            <div class="modal_window_rewiev">
+                                                <svg class="svg"></svg>
+                                                <div class="modal_window_adress">
+                                                ${firstGeoObject.getAddressLine()}
+                                                </div>
+                                            </div>
+                                            <button type="button" class="modal_window_close"></button>
+                                        </div>
+                                        <ul class="review">
+                                            <li class="review-item">
+                                                Отзывов пока нет
+                                            </li>
+                                        </ul>
+                                        <form action="" id="forms">
+                                            <p class="rewiev">ВАШ ОТЗЫВ</p>
+                                            <input type="text" placeholder="Ваше имя" name="autor-name" class="rewiev_name">
+                                            <input type="text" placeholder="Укажите место" name="place" class="rewiev_place">
+                                            <textarea name="rewiev_comment" placeholder="Поделитесь впечатлениями" class="rewiev_comment"></textarea>
+                                            <div class="btn_container">
+                                                <button type="button" class="rewiev_button_add">Добавить</button>
+                                            </div>
+                                        </form>
+                                        <img class="logo"></img>
+                                    </div>`]
+                });
+        });
+    }
+};
+// firstGeoObject.getAddressLine() adres
 
- 2.1 *: Значение по умолчанию для второго аргумента должно быть равно 100
-
- Пример:
-   sumWithDefaults(10) вернет 110
- */
-function sumWithDefaults(a, b=100) {
-  return a + b;
-}
-
-/*
- Задание 3:
-
- Функция должна принимать другую функцию и возвращать результат вызова этой функции
-
- Пример:
-   returnFnResult(() => 'привет') вернет 'привет'
- */
-function returnFnResult(fn) {
-  return fn();
-}
-
-/*
- Задание 4:
-
- Функция должна принимать число и возвращать новую функцию (F)
- При вызове функции F, переданное ранее число должно быть увеличено на единицу и возвращено из F
-
- Пример:
-   var f = returnCounter(10);
-
-   console.log(f()); // выведет 11
-   console.log(f()); // выведет 12
-   console.log(f()); // выведет 13
- */
-function returnCounter(number=0) {
-  return function F() {
-    return ++number;
-  };
-}
-
-/*
- Задание 5 *:
-
- Функция должна возвращать все переданные ей аргументы в виде массива
- Количество переданных аргументов заранее неизвестно
-
- Пример:
-   returnArgumentsArray(1, 2, 3) вернет [1, 2, 3]
- */
-function returnArgumentsArray() {
-  return [...arguments];
-}
-
-/*
- Задание 6 *:
-
- Функция должна принимать другую функцию (F) и некоторое количество дополнительных аргументов
- Функция должна привязать переданные аргументы к функции F и вернуть получившуюся функцию
-
- Пример:
-   function sum(a, b) {
-     return a + b;
-   }
-
-   var newSum = bindFunction(sum, 2, 4);
-
-   console.log(newSum()) выведет 6
- */
-function bindFunction(fn, ...args) {
-  return function() {
-    return fn.call(this, ...args);
-  };
-}
-
-export {
-  returnFirstArgument,
-  sumWithDefaults,
-  returnArgumentsArray,
-  returnFnResult,
-  returnCounter,
-  bindFunction
-}
+ 
